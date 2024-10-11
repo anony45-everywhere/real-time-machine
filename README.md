@@ -78,3 +78,8 @@ To achieve project objectives, the following steps will be taken:
 ---
 
 This project stands at the intersection of engineering, energy systems, and theoretical physics, aspiring to expand our understanding of time and energy manipulation. Through advanced technologies and innovative designs, it aims to pave the way for future explorations into time travel.
+
+---
+![Time Machine](https://anony45-everywhere.github.io/real-time-machine/time-machine.png)
+
+[Download Draw.io File](https://anony45-everywhere.github.io/real-time-machine/time-machine.drawio)
