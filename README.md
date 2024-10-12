@@ -83,3 +83,9 @@ This project stands at the intersection of engineering, energy systems, and theo
 ![Time Machine](https://anony45-everywhere.github.io/real-time-machine/time-machine.png)
 
 [Download Draw.io File](https://anony45-everywhere.github.io/real-time-machine/time-machine.drawio)
+
+## Note 
+
+- **If velocity is comparable with light speed, then you will go to future**
+- **If velocity is equal to light speed, then time is stopped for everyone except for you**
+- **If velocity is more than light speed, then you may go to past**
