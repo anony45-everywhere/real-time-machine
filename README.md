@@ -82,35 +82,113 @@ To achieve project objectives, the following steps will be taken:
 ```python
 import numpy as np
 
-def hydraulic_press_energy(input_force, small_piston_d, large_piston_d):
-    area_ratio = (large_piston_d / small_piston_d) ** 2
-    output_force = input_force * area_ratio
-    displacement = 0.1  # Assume 10 cm displacement
-    work_done = output_force * displacement
-    return work_done
+# Constants and Assumptions
+DISPLACEMENT = 0.1  # meters, piston displacement
+FRICTION_COEFF = 0.03  # friction coefficient
+INDUCTION_EFFICIENCY = 0.9  # 90% efficiency for electromagnetic induction
+RESONANCE_FACTOR = 1.5  # Resonance boost factor
+BATTERY_INPUT = 37.5  # J per cycle (300 N * 0.1 m / 0.8 efficiency)
+CYCLE_TIME = 1  # seconds per cycle (down + up)
 
-def electromagnetic_induction(magnetic_field, velocity, coil_turns, area):
+# 1. Hydraulic Press Energy (Downstroke)
+def hydraulic_press_energy(input_force, small_piston_d, large_piston_d, displacement=DISPLACEMENT):
+    small_area = np.pi * (small_piston_d / 2) ** 2
+    large_area = np.pi * (large_piston_d / 2) ** 2
+    area_ratio = large_area / small_area
+    output_force_ideal = input_force * area_ratio
+    output_force_effective = output_force_ideal * (1 - FRICTION_COEFF)
+    energy = output_force_effective * displacement
+    return energy, output_force_ideal, output_force_effective
+
+# 2. Electromagnetic Induction Energy
+def electromagnetic_induction_energy(mechanical_energy, efficiency=INDUCTION_EFFICIENCY):
+    energy = mechanical_energy * efficiency
+    # EMF-based check for comparison (optional)
+    magnetic_field, velocity, coil_turns, area = 0.5, 2, 500, 0.1
     emf = coil_turns * magnetic_field * velocity * area
-    power_output = emf * 10  # Assuming resistance load
-    return power_output
+    power = emf * 10  # 10 A load
+    emf_energy = power * CYCLE_TIME
+    print(f"EMF-based Induction Energy (for {CYCLE_TIME}s): {emf_energy:.2f} J")
+    return energy
 
-def resonance_boost(energy_input):
-    resonance_factor = 1.5  # Assumed boost due to resonance
-    return energy_input * resonance_factor
+# 3. Resonance Boost Energy
+def resonance_boost_energy(induction_energy, factor=RESONANCE_FACTOR):
+    return induction_energy * factor
 
-def total_energy():
-    hydraulic_energy = hydraulic_press_energy(300, 0.05, 0.793)
-    mag_repulsion_energy = 67915.69
-    em_induction_energy = electromagnetic_induction(0.5, 2, 500, 0.1)
-    resonance_energy = resonance_boost(em_induction_energy)
-    vibration_energy = 8149.88
-    return hydraulic_energy + mag_repulsion_energy + em_induction_energy + resonance_energy + vibration_energy
+# 4. Magnetic Repulsion Energy (Triggered at Bottom)
+def magnetic_repulsion_energy(magnetic_force, displacement=DISPLACEMENT):
+    # Assuming repulsion occurs fully at bottom, released over 0.1 m
+    return magnetic_force * displacement
 
-total_output = total_energy()
-efficiency = (total_output / 37730.94) * 100
+# 5. Spring Reset Energy (Upstroke)
+def spring_reset_energy(magnetic_force, displacement=DISPLACEMENT, piston_mass=10):
+    # Average force over 0.1 m (magnetic force at 0 m to ~0 at 0.1 m)
+    avg_magnetic_force = magnetic_force / 2
+    weight_force = piston_mass * 9.81  # N (10 kg mass)
+    total_force = avg_magnetic_force + weight_force
+    energy = total_force * displacement
+    spring_constant = magnetic_force / displacement  # k = F/x at max
+    stored_energy = 0.5 * spring_constant * (displacement ** 2)
+    print(f"Spring Constant: {spring_constant:.2f} N/m")
+    return stored_energy
 
-print(f"Total Output Energy: {total_output:.2f} J")
-print(f"Efficiency: {efficiency:.2f}%")
+# 6. Total Energy and Net Output
+def calculate_system():
+    # Inputs
+    input_force = 300  # N
+    small_piston_d = 0.05  # m
+    large_piston_d = 0.793  # m
+    mag_repulsion_energy_input = 67915.69  # J (your figure)
+    vibration_energy = 8149.88  # J (your figure)
+
+    # Hydraulic Press (Downstroke)
+    hydraulic_energy, force_ideal, force_effective = hydraulic_press_energy(
+        input_force, small_piston_d, large_piston_d)
+    
+    # Electromagnetic Induction
+    induction_energy = electromagnetic_induction_energy(hydraulic_energy)
+    
+    # Resonance Boost
+    resonance_energy = resonance_boost_energy(induction_energy)
+    
+    # Magnetic Repulsion (at bottom of stroke)
+    magnetic_force = mag_repulsion_energy_input / DISPLACEMENT  # 679,156.9 N
+    magnetic_energy = magnetic_repulsion_energy(magnetic_force)
+    
+    # Spring Reset (Upstroke)
+    spring_energy = spring_reset_energy(magnetic_force)
+    
+    # Total Output Before Reset
+    total_output = (hydraulic_energy + magnetic_energy + induction_energy + 
+                    resonance_energy + vibration_energy)
+    
+    # Net Output After Spring Reset
+    net_output = total_output - spring_energy
+    
+    # Efficiency (relative to battery input)
+    efficiency = (net_output / BATTERY_INPUT) * 100
+
+    # Print Results
+    print(f"\nHydraulic Press Calculations (Downstroke):")
+    print(f"Input Force: {input_force} N")
+    print(f"Ideal Output Force: {force_ideal:.2f} N")
+    print(f"Effective Output Force (with friction): {force_effective:.2f} N")
+    print(f"Hydraulic Energy: {hydraulic_energy:.2f} J")
+    
+    print(f"\nEnergy Contributions:")
+    print(f"Magnetic Repulsion Energy: {magnetic_energy:.2f} J")
+    print(f"Electromagnetic Induction Energy: {induction_energy:.2f} J")
+    print(f"Resonance Boost Energy: {resonance_energy:.2f} J")
+    print(f"Vibration Harvesting Energy: {vibration_energy:.2f} J")
+    print(f"Total Output Before Reset: {total_output:.2f} J")
+    
+    print(f"\nSpring Reset (Upstroke):")
+    print(f"Spring Energy Required: {spring_energy:.2f} J")
+    print(f"Net Output Energy: {net_output:.2f} J")
+    print(f"Efficiency (vs. Battery Input {BATTERY_INPUT} J): {efficiency:.2f}%")
+# Run the calculation
+if __name__ == "__main__":
+    calculate_system()
 ```
 
 This Python script simulates the energy conversion processes, verifying theoretical calculations and testing various efficiency optimizations.
